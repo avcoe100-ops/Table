@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#07101f">
+<title>ELEMENTS — Interactive Periodic Table</title>
+<style>
+:root{
+  --bg:#060b16;--panel:rgba(13,24,44,.88);--line:rgba(147,180,255,.18);
+  --text:#f4f7ff;--muted:#9aa9c5;--accent:#76e4ff;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial,sans-serif;min-height:100vh;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:-30%;z-index:-3;background:radial-gradient(ellipse at 12% 12%,#16325b 0,transparent 34%),radial-gradient(ellipse at 85% 30%,#2c174d 0,transparent 30%),radial-gradient(ellipse at 60% 90%,#103a48 0,transparent 35%);animation:nebula 22s ease-in-out infinite alternate}
+body:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-2;opacity:.35;background-image:radial-gradient(1px 1px at 10% 20%,white 50%,transparent),radial-gradient(1px 1px at 70% 60%,white 50%,transparent),radial-gradient(2px 2px at 42% 83%,#91caff 50%,transparent),radial-gradient(1px 1px at 91% 12%,white 50%,transparent),radial-gradient(1px 1px at 26% 56%,white 50%,transparent);background-size:220px 190px;animation:stars 90s linear infinite}
+@keyframes nebula{to{transform:translate3d(3%,2%,0) rotate(4deg) scale(1.08)}}@keyframes stars{to{background-position:1000px 800px}}@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}@keyframes glow{0%,100%{box-shadow:0 0 0 rgba(118,228,255,0)}50%{box-shadow:0 0 24px rgba(118,228,255,.16)}}@keyframes pulse{0%,100%{opacity:.5;transform:scale(.98)}50%{opacity:1;transform:scale(1.02)}}
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px clamp(16px,4vw,56px);background:rgba(5,11,23,.78);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:11px;font-weight:900;letter-spacing:.14em;font-size:17px;white-space:nowrap}.atom-logo{width:34px;height:34px;border:1px solid #76e4ff;border-radius:50%;display:grid;place-items:center;color:var(--accent);font-size:21px;box-shadow:0 0 20px #76e4ff30;animation:pulse 4s infinite}
+.header-right{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.ghost,.primary{border:1px solid var(--line);color:var(--text);background:#111d33;border-radius:12px;padding:10px 14px;transition:transform .2s,border-color .2s,background .2s}
+.ghost:hover,.primary:hover{transform:translateY(-2px);border-color:#76e4ff; background:#182b49}
+.primary{background:linear-gradient(120deg,#167ca1,#5d57c8);border-color:transparent;font-weight:750}
+.hero{padding:clamp(35px,6vw,75px) clamp(16px,4vw,56px) 30px;display:grid;grid-template-columns:1.2fr .8fr;gap:30px;align-items:center;animation:rise .7s both}
+.kicker{font-size:11px;letter-spacing:.24em;color:var(--accent);font-weight:800;text-transform:uppercase}
+h1{font-size:clamp(40px,6vw,76px);line-height:.99;letter-spacing:-.055em;margin:14px 0 20px;max-width:750px}
+h1 span{background:linear-gradient(100deg,#77e8ff,#b5a7ff 55%,#ffb2dc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:690px;color:#b3c0d8;line-height:1.75;font-size:15px}
+.hero-card{justify-self:end;width:min(100%,330px);border:1px solid var(--line);border-radius:24px;padding:23px;background:linear-gradient(145deg,#12233fba,#0c1225bb);box-shadow:0 20px 80px #0004;position:relative;overflow:hidden}
+.hero-card:before{content:"";position:absolute;width:190px;height:190px;right:-70px;top:-75px;border-radius:50%;background:radial-gradient(circle,#8b76ff40,transparent 70%);animation:pulse 5s infinite}
+.card-stat{display:flex;justify-content:space-between;gap:15px;padding:13px 0;border-bottom:1px solid var(--line);position:relative}.card-stat:last-child{border:0}.card-stat span{color:var(--muted);font-size:13px}.card-stat strong{font-size:17px}
+.toolbar{padding:15px clamp(16px,4vw,56px);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.search-wrap{flex:1;min-width:220px;position:relative}.search-wrap:before{content:"⌕";position:absolute;left:14px;top:7px;font-size:23px;color:var(--muted)}
+#search{width:100%;padding:13px 14px 13px 43px;background:#0b1427d9;border:1px solid var(--line);border-radius:13px;color:var(--text);outline:none;transition:border .2s,box-shadow .2s}
+#search:focus{border-color:var(--accent);box-shadow:0 0 0 3px #76e4ff18}
+select{padding:12px 14px;background:#0b1427;color:var(--text);border:1px solid var(--line);border-radius:12px;outline:none;max-width:100%}
+.legend{padding:0 clamp(16px,4vw,56px) 18px;display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:11px;color:#c6d2e7;border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:#0c1424a8;display:flex;gap:7px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.table-wrap{padding:0 clamp(10px,2vw,28px);overflow-x:auto;scrollbar-color:#344b70 #0a1120}
+.periodic{display:grid;grid-template-columns:repeat(18,minmax(48px,1fr));grid-template-rows:repeat(9,minmax(67px,auto));gap:5px;min-width:1020px;max-width:1800px;margin:0 auto;padding-bottom:16px}
+.element{--cat:#77d8ff;position:relative;min-width:0;min-height:67px;border:1px solid color-mix(in srgb,var(--cat),transparent 55%);border-radius:9px;padding:5px 3px;background:linear-gradient(145deg,color-mix(in srgb,var(--cat),transparent 88%),rgba(10,19,36,.94));color:var(--text);text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;overflow:hidden;transition:transform .18s,border-color .18s,box-shadow .18s,background .18s;animation:rise .45s both;animation-delay:calc(var(--i,0)*4ms)}
+.element:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 25%,#ffffff0d 48%,transparent 70%);transform:translateX(-140%);transition:transform .45s}
+.element:hover:before{transform:translateX(140%)}
+.element:hover{transform:translateY(-5px) scale(1.06);z-index:3;border-color:var(--cat);box-shadow:0 8px 25px color-mix(in srgb,var(--cat),transparent 75%);background:color-mix(in srgb,var(--cat),#0b1324 83%)}
+.element:focus-visible{outline:2px solid white;outline-offset:2px}
+.element .num{align-self:flex-start;font-size:9px;color:#c0cce0;line-height:1;margin-left:3px}
+.element .sym{font-weight:850;font-size:clamp(16px,1.5vw,22px);line-height:1.1}
+.element .ename{font-size:9px;line-height:1.15;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;color:#d7e1f1}
+.element .mass{font-size:8px;color:#93a5c0}
+.placeholder{display:grid;place-items:center;color:#5e6d87;font-size:10px;border:1px dashed #26344c;border-radius:9px;min-height:67px;text-align:center}
+.series-label{grid-column:1/4;display:flex;align-items:center;padding-left:10px;color:#7f91ad;font-size:11px;letter-spacing:.08em}
+.status{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap;padding:12px clamp(16px,4vw,56px);color:var(--muted);font-size:12px}
+.no-results{display:none;text-align:center;color:var(--muted);padding:35px}
+.section{padding:45px clamp(16px,4vw,56px) 65px}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;margin-bottom:20px}
+h2{font-size:clamp(25px,3vw,36px);letter-spacing:-.035em;margin:8px 0}
+.section-head p{color:var(--muted);font-size:13px;margin:0}
+.fact-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.fact{padding:19px;border:1px solid var(--line);border-radius:17px;background:linear-gradient(145deg,#111f37b5,#0a1120b5);transition:transform .2s,border-color .2s}
+.fact:hover{transform:translateY(-4px);border-color:#5b7ba9}
+.fact .icon{font-size:22px}.fact strong{display:block;font-size:25px;margin:13px 0 4px}.fact span{font-size:12px;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding:22px clamp(16px,4vw,56px);color:#71829f;font-size:12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.modal-backdrop{position:fixed;inset:0;background:#020611b8;backdrop-filter:blur(10px);z-index:50;display:none;align-items:center;justify-content:center;padding:18px;opacity:0;transition:opacity .2s}
+.modal-backdrop.open{display:flex;opacity:1}
+.modal{width:min(780px,100%);max-height:90vh;overflow:auto;border:1px solid #526e9a88;border-radius:25px;background:linear-gradient(145deg,#142440,#080f20 75%);box-shadow:0 30px 100px #000a;transform:translateY(16px) scale(.98);animation:modalIn .25s forwards}
+@keyframes modalIn{to{transform:translateY(0) scale(1)}}
+.modal-top{padding:24px;display:flex;align-items:flex-start;gap:20px;border-bottom:1px solid var(--line);position:relative}
+.big-symbol{width:104px;height:104px;flex:0 0 104px;border:1px solid var(--cat);background:color-mix(in srgb,var(--cat),transparent 87%);border-radius:21px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 0 35px color-mix(in srgb,var(--cat),transparent 88%)}
+.big-symbol strong{font-size:43px;line-height:1}.big-symbol small{font-size:12px;margin-top:7px;color:#c5d5ea}
+.modal-title{flex:1;min-width:0}.modal-title .kicker{font-size:10px}.modal-title h2{font-size:clamp(26px,4vw,40px);margin:8px 0}.modal-title p{margin:0;color:var(--muted);line-height:1.6;font-size:13px}
+.close{position:absolute;right:16px;top:15px;border:1px solid var(--line);background:#0c1729;color:white;width:35px;height:35px;border-radius:50%;font-size:20px}
+.modal-body{padding:22px 24px 26px}.properties{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.property{padding:13px;border-radius:12px;background:#07101e99;border:1px solid #ffffff0b;min-width:0}
+.property span{display:block;color:#8ea2c2;font-size:10px;text-transform:uppercase;letter-spacing:.09em;margin-bottom:7px}.property strong{font-size:13px;overflow-wrap:anywhere;line-height:1.5}
+.modal-section{margin-top:20px}.modal-section h3{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0 0 8px}.modal-section p{color:#c3cee0;font-size:13px;line-height:1.75;margin:0;white-space:pre-line}
+.data-note{color:#7f91ad;font-size:11px;margin-top:18px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#162b48;border:1px solid #76e4ff66;padding:12px 18px;border-radius:999px;z-index:80;color:white;font-size:12px;transition:.25s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:900px){.hero{grid-template-columns:1fr}.hero-card{justify-self:start;width:min(100%,500px)}.fact-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){header{align-items:flex-start}.brand{font-size:13px}.atom-logo{width:29px;height:29px}.header-right .ghost{padding:8px 10px;font-size:12px}.hero{padding-top:35px}.hero-card{padding:17px}.toolbar{padding-top:10px}.properties{grid-template-columns:repeat(2,minmax(0,1fr))}.modal-top{padding:18px;gap:13px}.big-symbol{width:76px;height:76px;flex-basis:76px;border-radius:16px}.big-symbol strong{font-size:32px}.modal-body{padding:17px}.fact-grid{gap:8px}.fact{padding:14px}.fact strong{font-size:22px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="atom-logo">⚛</span><span>ELEMENTS <span style="color:#8da0bd;font-weight:500">/ LAB</span></span></div>
+  <div class="header-right">
+    <button class="ghost" id="randomBtn">✦ Random element</button>
+    <button class="ghost" id="resetBtn">Reset view</button>
+  </div>
+</header>
+<main>
+  <section class="hero">
+    <div>
+      <div class="kicker">The building blocks of everything</div>
+      <h1>Meet the <span>elements.</span></h1>
+      <p>Explore all 118 known chemical elements in an interactive periodic table. Search by name or symbol, filter by family, and open any element to explore its atomic properties, electron configuration, discovery, and real-world uses.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
+        <button class="primary" onclick="document.querySelector('#tableSection').scrollIntoView({behavior:'smooth'})">Explore the table ↓</button>
+        <button class="ghost" id="learnBtn">How to use</button>
+      </div>
+    </div>
+    <aside class="hero-card">
+      <div class="kicker">Your element explorer</div>
+      <div class="card-stat"><span>Known elements</span><strong>118</strong></div>
+      <div class="card-stat"><span>Periodic table periods</span><strong>7</strong></div>
+      <div class="card-stat"><span>Standard groups</span><strong>18</strong></div>
+      <div class="card-stat"><span>Ways to explore</span><strong>Search · Filter · Select</strong></div>
+    </aside>
+  </section>
+
+  <section id="tableSection">
+    <div class="toolbar">
+      <div class="search-wrap"><input id="search" type="search" placeholder="Search name, symbol, atomic number…" autocomplete="off" aria-label="Search elements"></div>
+      <select id="categoryFilter" aria-label="Filter by category"><option value="all">All element families</option></select>
+      <select id="stateFilter" aria-label="Filter by state"><option value="all">All states</option><option value="Gas">Gas</option><option value="Liquid">Liquid</option><option value="Solid">Solid</option><option value="Unknown">Unknown state</option></select>
+      <button class="ghost" id="clearBtn">Clear filters</button>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="table-wrap"><div class="periodic" id="periodic" aria-label="Interactive periodic table"></div></div>
+    <div class="status"><span id="countText">Loading 118 elements…</span><span>Tip: select an element tile for its full profile.</span></div>
+    <div class="no-results" id="noResults">No elements match those filters. Try another search.</div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><div class="kicker">A universe in miniature</div><h2>Periodic table at a glance</h2><p>Quick facts about the chemical elements.</p></div></div>
+    <div class="fact-grid">
+      <div class="fact"><div class="icon">⚛</div><strong>118</strong><span>Currently recognized elements</span></div>
+      <div class="fact"><div class="icon">◈</div><strong>18</strong><span>Groups arranged in columns</span></div>
+      <div class="fact"><div class="icon">▤</div><strong>7</strong><span>Periods arranged in rows</span></div>
+      <div class="fact"><div class="icon">✧</div><strong>4</strong><span>Blocks: s, p, d and f</span></div>
+    </div>
+  </section>
+</main>
+<footer><span>ELEMENTS / LAB — Interactive chemistry reference</span><span>Scientific values may vary by isotope, source, and measurement conditions.</span></footer>
+
+<div class="modal-backdrop" id="backdrop" role="dialog" aria-modal="true" aria-labelledby="modalName">
+  <article class="modal" id="modal">
+    <div class="modal-top" id="modalTop">
+      <div class="big-symbol"><strong id="modalSymbol">H</strong><small id="modalNumber">Atomic no. 1</small></div>
+      <div class="modal-title"><div class="kicker" id="modalCategory">NONMETAL</div><h2 id="modalName">Hydrogen</h2><p id="modalSummary">The lightest chemical element.</p></div>
+      <button class="close" id="closeModal" aria-label="Close element details">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="properties" id="properties"></div>
+      <div class="modal-section"><h3>About this element</h3><p id="modalAbout"></p></div>
+      <div class="modal-section"><h3>Electron configuration</h3><p id="modalElectron"></p></div>
+      <div class="modal-section"><h3>Discovery & naming</h3><p id="modalDiscovery"></p></div>
+      <div class="modal-section"><h3>Everyday uses & significance</h3><p id="modalUses"></p></div>
+      <div class="data-note" id="dataNote">Loading detailed scientific data when available…</div>
+    </div>
+  </article>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const RAW = `1|H|Hydrogen|1.008
+2|He|Helium|4.0026
+3|Li|Lithium|6.94
+4|Be|Beryllium|9.0122
+5|B|Boron|10.81
+6|C|Carbon|12.011
+7|N|Nitrogen|14.007
+8|O|Oxygen|15.999
+9|F|Fluorine|18.998
+10|Ne|Neon|20.180
+11|Na|Sodium|22.990
+12|Mg|Magnesium|24.305
+13|Al|Aluminium|26.982
+14|Si|Silicon|28.085
+15|P|Phosphorus|30.974
+16|S|Sulfur|32.06
+17|Cl|Chlorine|35.45
+18|Ar|Argon|39.948
+19|K|Potassium|39.098
+20|Ca|Calcium|40.078
+21|Sc|Scandium|44.956
+22|Ti|Titanium|47.867
+23|V|Vanadium|50.942
+24|Cr|Chromium|51.996
+25|Mn|Manganese|54.938
+26|Fe|Iron|55.845
+27|Co|Cobalt|58.933
+28|Ni|Nickel|58.693
+29|Cu|Copper|63.546
+30|Zn|Zinc|65.38
+31|Ga|Gallium|69.723
+32|Ge|Germanium|72.630
+33|As|Arsenic|74.922
+34|Se|Selenium|78.971
+35|Br|Bromine|79.904
+36|Kr|Krypton|83.798
+37|Rb|Rubidium|85.468
+38|Sr|Strontium|87.62
+39|Y|Yttrium|88.906
+40|Zr|Zirconium|91.224
+41|Nb|Niobium|92.906
+42|Mo|Molybdenum|95.95
+43|Tc|Technetium|[98]
+44|Ru|Ruthenium|101.07
+45|Rh|Rhodium|102.91
+46|Pd|Palladium|106.42
+47|Ag|Silver|107.87
+48|Cd|Cadmium|112.41
+49|In|Indium|114.82
+50|Sn|Tin|118.71
+51|Sb|Antimony|121.76
+52|Te|Tellurium|127.60
+53|I|Iodine|126.90
+54|Xe|Xenon|131.29
+55|Cs|Caesium|132.91
+56|Ba|Barium|137.33
+57|La|Lanthanum|138.91
+58|Ce|Cerium|140.12
+59|Pr|Praseodymium|140.91
+60|Nd|Neodymium|144.24
+61|Pm|Promethium|[145]
+62|Sm|Samarium|150.36
+63|Eu|Europium|151.96
+64|Gd|Gadolinium|157.25
+65|Tb|Terbium|158.93
+66|Dy|Dysprosium|162.50
+67|Ho|Holmium|164.93
+68|Er|Erbium|167.26
+69|Tm|Thulium|168.93
+70|Yb|Ytterbium|173.05
+71|Lu|Lutetium|174.97
+72|Hf|Hafnium|178.49
+73|Ta|Tantalum|180.95
+74|W|Tungsten|183.84
+75|Re|Rhenium|186.21
+76|Os|Osmium|190.23
+77|Ir|Iridium|192.22
+78|Pt|Platinum|195.08
+79|Au|Gold|196.97
+80|Hg|Mercury|200.59
+81|Tl|Thallium|204.38
+82|Pb|Lead|207.2
+83|Bi|Bismuth|208.98
+84|Po|Polonium|[209]
+85|At|Astatine|[210]
+86|Rn|Radon|[222]
+87|Fr|Francium|[223]
+88|Ra|Radium|[226]
+89|Ac|Actinium|[227]
+90|Th|Thorium|232.04
+91|Pa|Protactinium|231.04
+92|U|Uranium|238.03
+93|Np|Neptunium|[237]
+94|Pu|Plutonium|[244]
+95|Am|Americium|[243]
+96|Cm|Curium|[247]
+97|Bk|Berkelium|[247]
+98|Cf|Californium|[251]
+99|Es|Einsteinium|[252]
+100|Fm|Fermium|[257]
+101|Md|Mendelevium|[258]
+102|No|Nobelium|[259]
+103|Lr|Lawrencium|[266]
+104|Rf|Rutherfordium|[267]
+105|Db|Dubnium|[268]
+106|Sg|Seaborgium|[269]
+107|Bh|Bohrium|[270]
+108|Hs|Hassium|[277]
+109|Mt|Meitnerium|[278]
+110|Ds|Darmstadtium|[281]
+111|Rg|Roentgenium|[282]
+112|Cn|Copernicium|[285]
+113|Nh|Nihonium|[286]
+114|Fl|Flerovium|[289]
+115|Mc|Moscovium|[290]
+116|Lv|Livermorium|[293]
+117|Ts|Tennessine|[294]
+118|Og|Oganesson|[294]`;
+const baseElements = RAW.trim().split('\n').map(line=>{
+  const [number,symbol,name,mass]=line.split('|');
+  return {number:+number,symbol,name,atomic_mass:mass,category:categoryFor(+number),group:positionFor(+number).group,period:positionFor(+number).period,xpos:positionFor(+number).x,ypos:positionFor(+number).y};
+});
+function categoryFor(n){
+  if(n===1||[6,7,8,15,16,34].includes(n)) return 'Nonmetal';
+  if(n===2||[10,18,36,54,86,118].includes(n)) return 'Noble gas';
+  if([9,17,35,53,85,117].includes(n)) return 'Halogen';
+  if([3,11,19,37,55,87].includes(n)) return 'Alkali metal';
+  if([4,12,20,38,56,88].includes(n)) return 'Alkaline earth metal';
+  if([5,14,32,33,51,52].includes(n)) return 'Metalloid';
+  if((n>=57&&n<=71)) return 'Lanthanide';
+  if((n>=89&&n<=103)) return 'Actinide';
+  if([13,31,49,50,81,82,83,84,113,114,115,116].includes(n)) return 'Post-transition metal';
+  if(n>=21&&n<=30||n>=39&&n<=48||n>=72&&n<=80||n>=104&&n<=112) return 'Transition metal';
+  if([110,111,112,113,114,115,116,117,118].includes(n)) return 'Unknown properties';
+  return 'Unknown properties';
+}
+function positionFor(n){
+  if(n===1)return {group:1,period:1,x:1,y:1};
+  if(n===2)return {group:18,period:1,x:18,y:1};
+  if(n>=3&&n<=4)return {group:n-2,period:2,x:n-2,y:2};
+  if(n>=5&&n<=10)return {group:n+8,period:2,x:n+8,y:2};
+  if(n>=11&&n<=12)return {group:n-10,period:3,x:n-10,y:3};
+  if(n>=13&&n<=18)return {group:n,x:n,y:3,period:3};
+  if(n>=19&&n<=36)return {group:n-18,period:4,x:n-18,y:4};
+  if(n>=37&&n<=54)return {group:n-36,period:5,x:n-36,y:5};
+  if(n===55)return {group:1,period:6,x:1,y:6};
+  if(n===56)return {group:2,period:6,x:2,y:6};
+  if(n===57)return {group:3,period:6,x:3,y:6};
+  if(n>=58&&n<=71)return {group:n-54,period:6,x:n-54,y:8};
+  if(n>=72&&n<=86)return {group:n-68,period:6,x:n-68,y:6};
+  if(n===87)return {group:1,period:7,x:1,y:7};
+  if(n===88)return {group:2,period:7,x:2,y:7};
+  if(n===89)return {group:3,period:7,x:3,y:7};
+  if(n>=90&&n<=103)return {group:n-86,period:7,x:n-86,y:9};
+  return {group:n-100,period:7,x:n-100,y:7};
+}
+const colors={
+ 'Alkali metal':'#ff8c9b','Alkaline earth metal':'#ffbd75','Transition metal':'#f5d779',
+ 'Post-transition metal':'#8ee2b8','Metalloid':'#6ed7d4','Nonmetal':'#76c7ff',
+ 'Halogen':'#c2a2ff','Noble gas':'#ff9de1','Lanthanide':'#9ea9ff','Actinide':'#c39cff',
+ 'Unknown properties':'#aab6c8'
+};
+const familyOrder=Object.keys(colors);
+const descriptions={
+ 'Alkali metal':'Highly reactive metals, especially with water. They usually have one valence electron.',
+ 'Alkaline earth metal':'Reactive metals with two outer-shell electrons; many form important minerals and compounds.',
+ 'Transition metal':'Often strong, conductive metals with variable oxidation states and useful catalytic properties.',
+ 'Post-transition metal':'Metallic elements with diverse industrial, electrical, and chemical applications.',
+ 'Metalloid':'Elements with properties between metals and nonmetals; important in semiconductors and materials.',
+ 'Nonmetal':'Elements that are generally poor conductors and are essential to chemistry and life.',
+ 'Halogen':'Reactive salt-forming elements that commonly form compounds with metals.',
+ 'Noble gas':'Very low-reactivity gases with filled outer electron shells.',
+ 'Lanthanide':'The rare-earth series, widely used in magnets, phosphors, electronics, and optical materials.',
+ 'Actinide':'Heavy elements; many are radioactive and important in nuclear science.',
+ 'Unknown properties':'Some properties remain uncertain or are predicted because the element is extremely short-lived.'
+};
+const usesByFamily={
+ 'Alkali metal':'Used in batteries, chemical synthesis, specialized alloys, and industrial processes. Handle with care because many are highly reactive.',
+ 'Alkaline earth metal':'Used in lightweight alloys, construction materials, medical imaging, fireworks, and biological systems.',
+ 'Transition metal':'Common in tools, construction, electrical wiring, catalysts, coins, machinery, and advanced materials.',
+ 'Post-transition metal':'Used in electronics, soldering, packaging, alloys, pigments, and specialized industrial chemistry.',
+ 'Metalloid':'Important in semiconductors, glass, electronic components, flame retardants, and specialty materials.',
+ 'Nonmetal':'Essential to living systems, fuels, fertilizers, water chemistry, polymers, and industrial compounds.',
+ 'Halogen':'Used in water treatment, medicines, polymers, lighting, and chemical manufacturing. Some are hazardous in concentrated form.',
+ 'Noble gas':'Used in lighting, shielding atmospheres, lasers, cryogenics, and scientific instruments.',
+ 'Lanthanide':'Used in strong permanent magnets, rechargeable batteries, screens, lasers, glass polishing, and optics.',
+ 'Actinide':'Used in nuclear research and, for selected elements, nuclear fuels and specialized scientific applications.',
+ 'Unknown properties':'Research is ongoing; most known applications are limited to laboratory research.'
+};
+let elements=[...baseElements];
+let activeCategory='all';
+let activeState='all';
+let searchValue='';
+let externalDataLoaded=false;
+const periodic=document.getElementById('periodic');
+const categoryFilter=document.getElementById('categoryFilter');
+const stateFilter=document.getElementById('stateFilter');
+const search=document.getElementById('search');
+const backdrop=document.getElementById('backdrop');
+const toast=document.getElementById('toast');
+function escapeHTML(s){return String(s??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function nice(v){if(v===null||v===undefined||v===''||v==='unknown')return 'Not available';if(typeof v==='number')return Number.isFinite(v)?Number(v.toPrecision(6)).toString():'Not available';return String(v);}
+function normalizeCategory(value){
+ const v=String(value||'').toLowerCase();
+ if(v.includes('alkali metal'))return 'Alkali metal';
+ if(v.includes('alkaline earth'))return 'Alkaline earth metal';
+ if(v.includes('transition metal'))return 'Transition metal';
+ if(v.includes('post-transition'))return 'Post-transition metal';
+ if(v.includes('metalloid'))return 'Metalloid';
+ if(v.includes('halogen'))return 'Halogen';
+ if(v.includes('noble gas'))return 'Noble gas';
+ if(v.includes('lanthanoid')||v.includes('lanthanide'))return 'Lanthanide';
+ if(v.includes('actinoid')||v.includes('actinide'))return 'Actinide';
+ if(v.includes('nonmetal')||v.includes('non-metal'))return 'Nonmetal';
+ return 'Unknown properties';
+}
+function categoryName(e){return normalizeCategory(e.category||e.category_name||'Unknown properties');}
+function stateName(e){const p=(e.phase||e.state||'').toLowerCase();if(p.includes('gas'))return 'Gas';if(p.includes('liquid'))return 'Liquid';if(p.includes('solid'))return 'Solid';return 'Unknown';}
+function setPosition(e){const p=positionFor(e.number);e.xpos=e.xpos||p.x;e.ypos=e.ypos||p.y;e.group=e.group||p.group;e.period=e.period||p.period;}
+function renderLegend(){
+ const legend=document.getElementById('legend');
+ legend.innerHTML=familyOrder.map(c=>`<span class="chip"><i class="dot" style="background:${colors[c]}"></i>${escapeHTML(c)}</span>`).join('');
+ categoryFilter.innerHTML='<option value="all">All element families</option>'+familyOrder.map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
+}
+function renderTable(){
+ const filtered=elements.filter(e=>{
+   const q=searchValue.toLowerCase();
+   const matches=!q||e.name.toLowerCase().includes(q)||e.symbol.toLowerCase().includes(q)||String(e.number).includes(q);
+   return matches&&(activeCategory==='all'||categoryName(e)===activeCategory)&&(activeState==='all'||stateName(e)===activeState);
+ });
+ periodic.innerHTML='';
+ // Spacer placeholders make the classic 18-column arrangement.
+ const map=new Map();
+ filtered.forEach(e=>{setPosition(e);map.set(`${e.ypos}-${e.xpos}`,e)});
+ for(let row=1;row<=9;row++){
+   for(let col=1;col<=18;col++){
+     const e=map.get(`${row}-${col}`);
+     if(e){
+       const cat=categoryName(e),color=colors[cat]||colors['Unknown properties'];
+       const b=document.createElement('button');
+       b.className='element';b.type='button';b.style.gridColumn=col;b.style.gridRow=row;b.style.setProperty('--cat',color);b.style.setProperty('--i',e.number);
+       b.title=`${e.name} (${e.symbol}) · Atomic number ${e.number}`;
+       b.setAttribute('aria-label',`Open ${e.name}, atomic number ${e.number}`);
+       b.innerHTML=`<span class="num">${e.number}</span><span class="sym">${escapeHTML(e.symbol)}</span><span class="ename">${escapeHTML(e.name)}</span><span class="mass">${escapeHTML(e.atomic_mass??e.atomicMass??'')}</span>`;
+       b.addEventListener('click',()=>openElement(e.number));periodic.appendChild(b);
+     }else if(filtered.length===118){
+       // A few deliberate gaps keep the main table shape legible.
+       const cell=document.createElement('div');
+       cell.className='placeholder';cell.style.gridColumn=col;cell.style.gridRow=row;
+       if((row===6||row===7)&&col===3){cell.textContent=row===6?'57–71 ↘':'89–103 ↘';cell.style.borderColor='#46577b';}
+       else cell.style.visibility='hidden';
+       periodic.appendChild(cell);
+     }
+   }
+ }
+ document.getElementById('countText').textContent=`Showing ${filtered.length} of ${elements.length} elements${externalDataLoaded?' · detailed reference data loaded':' · basic reference data'}`;
+ document.getElementById('noResults').style.display=filtered.length?'none':'block';
+ periodic.style.opacity='1';
+}
+function property(label,value){return `<div class="property"><span>${escapeHTML(label)}</span><strong>${escapeHTML(nice(value))}</strong></div>`}
+function openElement(n){
+ const e=elements.find(x=>x.number===n);if(!e)return;
+ const cat=categoryName(e),color=colors[cat]||colors['Unknown properties'];
+ document.getElementById('modalTop').style.setProperty('--cat',color);
+ document.getElementById('modalTop').querySelector('.big-symbol').style.setProperty('--cat',color);
+ document.getElementById('modalSymbol').textContent=e.symbol;
+ document.getElementById('modalNumber').textContent=`Atomic no. ${e.number}`;
+ document.getElementById('modalCategory').textContent=cat.toUpperCase();
+ document.getElementById('modalName').textContent=e.name;
+ document.getElementById('modalSummary').textContent=e.summary||descriptions[cat]||'A chemical element in the periodic table.';
+ const config=e.electron_configuration||e.electronConfiguration||'Not available in basic data';
+ const props=[
+  ['Atomic mass',e.atomic_mass??e.atomicMass],
+  ['Group / period',`${e.group??'—'} / ${e.period??'—'}`],
+  ['Block',e.block],
+  ['State at 20°C',stateName(e)],
+  ['Density',e.density!==undefined?`${nice(e.density)} g/cm³`:null],
+  ['Melting point',e.melt!==undefined?`${nice(e.melt)} K`:null],
+  ['Boiling point',e.boil!==undefined?`${nice(e.boil)} K`:null],
+  ['Electronegativity',e.electronegativity_pauling??e.electronegativity],
+  ['Electron affinity',e.electron_affinity!==undefined?`${nice(e.electron_affinity)} kJ/mol`:null],
+  ['Molar heat',e.molar_heat!==undefined?`${nice(e.molar_heat)} J/(mol·K)`:null],
+  ['Shells',Array.isArray(e.shells)?e.shells.join(' · '):null],
+  ['Known isotopes',e.isotopes]
+ ];
+ document.getElementById('properties').innerHTML=props.map(([a,b])=>property(a,b)).join('');
+ document.getElementById('modalAbout').textContent=e.summary||descriptions[cat]||'A chemical element with its own characteristic atomic number and properties.';
+ document.getElementById('modalElectron').textContent=config;
+ document.getElementById('modalDiscovery').textContent=[e.discovered_by?`Discovered by: ${e.discovered_by}.`:null,e.named_by?`Named by: ${e.named_by}.`:null,e.source?`Reference: ${e.source}`:null].filter(Boolean).join('\n')||'Discovery and naming details are not included in the basic offline dataset.';
+ document.getElementById('modalUses').textContent=usesByFamily[cat]||'Uses depend on the element and its compounds.';
+ document.getElementById('dataNote').textContent=externalDataLoaded?'Detailed values are loaded from an open periodic-table reference dataset. Some values are unknown, predicted, isotope-dependent, or measured under different conditions.':'Basic element data is built in. Connect to the internet and reload to attempt loading additional scientific properties.';
+ backdrop.style.display='flex';requestAnimationFrame(()=>backdrop.classList.add('open'));document.body.style.overflow='hidden';
+ document.getElementById('closeModal').focus();
+}
+function closeModal(){backdrop.classList.remove('open');setTimeout(()=>{backdrop.style.display='none';document.body.style.overflow=''},180)}
+function showToast(msg){toast.textContent=msg;toast.classList.add('show');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.remove('show'),2300)}
+function applyFilters(){searchValue=search.value.trim();activeCategory=categoryFilter.value;activeState=stateFilter.value;renderTable()}
+search.addEventListener('input',applyFilters);categoryFilter.addEventListener('change',applyFilters);stateFilter.addEventListener('change',applyFilters);
+document.getElementById('clearBtn').addEventListener('click',()=>{search.value='';categoryFilter.value='all';stateFilter.value='all';applyFilters()});
+document.getElementById('resetBtn').addEventListener('click',()=>{document.getElementById('clearBtn').click();document.querySelector('#tableSection').scrollIntoView({behavior:'smooth'});showToast('Table view reset')});
+document.getElementById('randomBtn').addEventListener('click',()=>{const e=elements[Math.floor(Math.random()*elements.length)];openElement(e.number)});
+document.getElementById('closeModal').addEventListener('click',closeModal);
+backdrop.addEventListener('click',e=>{if(e.target===backdrop)closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&backdrop.style.display==='flex')closeModal()});
+document.getElementById('learnBtn').addEventListener('click',()=>showToast('Search by name, symbol or atomic number. Filter by family or state. Click any tile for details.'));
+renderLegend();renderTable();
+
+// Enrich the built-in 118-element table with a public JSON reference when online.
+// If this request fails, the core table still works with the embedded data.
+fetch('https://raw.githubusercontent.com/Bowserinator/Periodic-Table-JSON/master/PeriodicTableJSON.json')
+ .then(r=>{if(!r.ok)throw new Error('Data source unavailable');return r.json()})
+ .then(json=>{
+   const remote=json.elements||json;
+   if(!Array.isArray(remote)||remote.length<100)throw new Error('Incomplete element data');
+   const byNumber=new Map(remote.map(e=>[Number(e.number),e]));
+   elements=baseElements.map(base=>{
+     const extra=byNumber.get(base.number)||{};
+     return {...base,...extra,number:base.number,symbol:base.symbol,name:base.name,
+       atomic_mass:extra.atomic_mass??base.atomic_mass,
+       category:normalizeCategory(extra.category)||base.category,
+       xpos:extra.xpos||base.xpos,ypos:extra.ypos||base.ypos,
+       group:base.group,period:base.period};
+   });
+   externalDataLoaded=true;renderLegend();renderTable();
+   if(backdrop.style.display==='flex'){const n=Number(document.getElementById('modalNumber').textContent.match(/\\d+/)?.[0]);if(n)openElement(n)}
+ })
+ .catch(()=>{});
+</script>
+</body>
+</html>
